@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>
+Формирование заявки
+</title>
+
+
+<link rel="stylesheet"
+href="/static/style.css">
+    <link rel="stylesheet" href="../static/style.css">
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+<h1>
+Формирование заявки
+</h1>
+
+
+<form action="/create" method="post">
+
+
+<label>
+Полное наименование заявителя
+</label>
+
+<input name="customer_name">
+
+
+<label>
+ОГРН
+</label>
+
+<input name="ogrn">
+
+
+<label>
+Юридический адрес
+</label>
+
+<textarea name="legal_address"></textarea>
+
+
+<label>
+Телефон
+</label>
+
+<input name="phone">
+
+
+<label>
+Email
+</label>
+
+<input name="email">
+
+
+<label>
+В лице
+</label>
+
+<input name="person">
+
+
+<button>
+Сформировать Word
+</button>
+
+
+</form>
+
+
+</div>
+
+
+</body>
+
+</html>
