@@ -1,88 +1,411 @@
 <!DOCTYPE html>
-
-<html>
-
+<html lang="ru">
 <head>
-
-<title>
-Формирование заявки
-</title>
-
-
-<link rel="stylesheet"
-href="/static/style.css">
-    <link rel="stylesheet" href="../static/style.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Формирование заявки</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
-
-
 <body>
 
+<div class="page">
+    <div class="container">
 
-<div class="container">
+        <header class="hero">
+            <div class="hero-badge">Онлайн-заявка</div>
+            <h1>Формирование заявки</h1>
+            <p class="hero-text">
+                Заполните данные организации и продукции, после чего получите готовый документ Word.
+            </p>
+        </header>
 
-
-<h1>
-Формирование заявки
-</h1>
-
-
-<form action="/create" method="post">
-
-
-<label>
-Полное наименование заявителя
-</label>
-
-<input name="customer_name">
-
-
-<label>
-ОГРН
-</label>
-
-<input name="ogrn">
-
-
-<label>
-Юридический адрес
-</label>
-
-<textarea name="legal_address"></textarea>
-
-
-<label>
-Телефон
-</label>
-
-<input name="phone">
-
-
-<label>
-Email
-</label>
-
-<input name="email">
-
-
-<label>
-В лице
-</label>
-
-<input name="person">
-
-
-<button>
-Сформировать Word
-</button>
-
-
-</form>
-
-
+        <form method="post" action="/create" class="app-form">
+{% if errors %}
+<div class="validation-box">
+    <h3>⚠ Проверьте заполнение заявки</h3>
+    <ul>
+    {% for error in errors %}
+        <li>{{ error }}</li>
+    {% endfor %}
+    </ul>
 </div>
+{% endif %}
+
+
+            <div class="main-grid">
+
+                <!-- ЗАЯВИТЕЛЬ -->
+                <section class="card">
+                    <div class="card-header">
+                        <div>
+                            <h2>🏢 Заявитель</h2>
+                            <p class="section-subtitle">Данные организации-заявителя</p>
+                        </div>
+                    </div>
+
+                    <div class="template-toolbar">
+                        <span class="toolbar-label">Быстрый шаблон:</span>
+                        <button type="button" class="chip-btn" onclick="setOrg('customer', 'ООО')">ООО</button>
+                        <button type="button" class="chip-btn" onclick="setOrg('customer', 'АО')">АО</button>
+                    </div>
+
+                    <div class="fields">
+                        <div class="field field-full">
+                            <label for="customer_name">Полное наименование</label>
+                            <input id="customer_name" name="customer_name" placeholder="Например: Общество с ограниченной ответственностью «Ромашка»" value="{{ form_data.get('customer_name', '') }}">
+                        </div>
+
+                        <div class="field field-full">
+                            <label for="customer_short">Сокращенное наименование</label>
+                            <input id="customer_short" name="customer_short" placeholder="Например: ООО «Ромашка»" value="{{ form_data.get('customer_short', '') }}">
+                        </div>
+
+                        <div class="field">
+                            <label for="customer_ogrn">ОГРН</label>
+                            <input id="customer_ogrn" name="customer_ogrn" placeholder="13 цифр" value="{{ form_data.get('customer_ogrn', '') }}">
+                        </div>
+
+                        <div class="field">
+                            <label for="customer_phone">Телефон</label>
+                            <input id="customer_phone" name="customer_phone" placeholder="+7 (___) ___-__-__" value="{{ form_data.get('customer_phone', '') }}">
+                        </div>
+
+                        <div class="field field-full">
+                            <label for="customer_address">Юридический адрес</label>
+                            <textarea id="customer_address" name="customer_address" placeholder="Укажите юридический адрес">{{ form_data.get("customer_address", "") }}</textarea>
+                        </div>
+
+                        <div class="field field-full">
+                            <label for="customer_fact_address">Фактический адрес</label>
+                            <textarea id="customer_fact_address" name="customer_fact_address" placeholder="Укажите фактический адрес">{{ form_data.get("customer_fact_address", "") }}</textarea>
+                        </div>
+
+                        <div class="field">
+                            <label for="customer_email">Email</label>
+                            <input id="customer_email" name="customer_email" placeholder="example@mail.ru" value="{{ form_data.get('customer_email', '') }}">
+                        </div>
+
+                        <div class="field">
+                            <label for="person">В лице</label>
+                            <input id="person" name="person" placeholder="Должность, ФИО" value="{{ form_data.get('person', '') }}">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ИЗГОТОВИТЕЛЬ -->
+                <section class="card">
+                    <div class="card-header header-between">
+                        <div>
+                            <h2>🏭 Изготовитель</h2>
+                            <p class="section-subtitle">Данные изготовителя продукции</p>
+                        </div>
+
+                        <label class="toggle-box">
+                            <input id="same" type="checkbox">
+                            <span>Совпадает с заявителем</span>
+                        </label>
+                    </div>
+
+                    <div class="fields">
+                        <div class="field field-full">
+                            <label for="manufacturer_name">Полное наименование</label>
+                            <input id="manufacturer_name" name="manufacturer_name" placeholder="Полное наименование изготовителя" value="{{ form_data.get('manufacturer_name', '') }}">
+                        </div>
+
+                        <div class="field field-full">
+                            <label for="manufacturer_short">Сокращенное наименование</label>
+                            <input id="manufacturer_short" name="manufacturer_short" placeholder="Сокращенное наименование изготовителя" value="{{ form_data.get('manufacturer_short', '') }}">
+                        </div>
+
+                        <div class="field">
+                            <label for="manufacturer_ogrn">ОГРН</label>
+                            <input id="manufacturer_ogrn" name="manufacturer_ogrn" placeholder="13 цифр" value="{{ form_data.get('manufacturer_ogrn', '') }}">
+                        </div>
+
+                        <div class="field">
+                            <label for="manufacturer_phone">Телефон</label>
+                            <input id="manufacturer_phone" name="manufacturer_phone" placeholder="+7 (___) ___-__-__" value="{{ form_data.get('manufacturer_phone', '') }}">
+                        </div>
+
+                        <div class="field field-full">
+                            <label for="manufacturer_address">Юридический адрес</label>
+                            <textarea id="manufacturer_address" name="manufacturer_address" placeholder="Укажите юридический адрес">{{ form_data.get("manufacturer_address", "") }}</textarea>
+                        </div>
+
+                        <div class="field field-full">
+                            <label for="manufacturer_fact_address">Фактический адрес</label>
+                            <textarea id="manufacturer_fact_address" name="manufacturer_fact_address" placeholder="Укажите фактический адрес">{{ form_data.get("manufacturer_fact_address", "") }}</textarea>
+                        </div>
+
+                        <div class="field field-full">
+                            <label for="manufacturer_email">Email</label>
+                            <input id="manufacturer_email" name="manufacturer_email" placeholder="example@mail.ru" value="{{ form_data.get('manufacturer_email', '') }}">
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- ПРОЦЕДУРА -->
+            <section class="card">
+                <div class="card-header">
+                    <div>
+                        <h2>📄 Процедура</h2>
+                        <p class="section-subtitle">Выберите вид процедуры</p>
+                    </div>
+                </div>
+
+                <div class="choice-grid choice-grid-3">
+                    <label class="choice-card">
+                        <input type="radio" name="dssoi" value="Добровольная сертификация" {% if form_data.get("dssoi") == "Добровольная сертификация" %}checked{% endif %}>
+                        <span>Добровольная<br>сертификация</span>
+                    </label>
+
+                    <label class="choice-card">
+                        <input type="radio" name="dssoi" value="Оценочные испытания" {% if form_data.get("dssoi") == "Оценочные испытания" %}checked{% endif %}>
+                        <span>Оценочные<br>испытания</span>
+                    </label>
+
+                    <label class="choice-card">
+                        <input type="radio" name="dssoi" value="Декларация о соответствии" {% if form_data.get("dssoi") == "Декларация о соответствии" %}checked{% endif %}>
+                        <span>Декларация<br>о соответствии</span>
+                    </label>
+                </div>
+            </section>
+
+            <div class="bottom-grid">
+
+                <!-- ПРОДУКЦИЯ -->
+                <section class="card">
+                    <div class="card-header">
+                        <div>
+                            <h2>📦 Продукция</h2>
+                            <p class="section-subtitle">Основные сведения о продукции</p>
+                        </div>
+                    </div>
+
+                    <div class="fields">
+                        <div class="field field-full">
+                            <label for="product_name">Наименование продукции</label>
+                            <textarea id="product_name" class="textarea-large" name="product_name" placeholder="Введите полное наименование и описание продукции">{{ form_data.get("product_name", "") }}</textarea>
+                        </div>
+
+                        <div class="field">
+                            <label for="okpd2">ОКПД2</label>
+                            <input id="okpd2" name="okpd2" placeholder="Например: 13.20.46" value="{{ form_data.get('okpd2', '') }}">
+                        </div>
+
+                        <div class="field">
+                            <label for="tnved">ТН ВЭД</label>
+                            <input id="tnved" name="tnved" placeholder="Например: 7019 64 000 0" value="{{ form_data.get('tnved', '') }}">
+                        </div>
+
+                        <div class="field field-full">
+                            <label for="production_document">Выпускается по</label>
+                            <textarea id="production_document" name="production_document" placeholder="ГОСТ, ТУ, СТО и другие документы">{{ form_data.get("production_document", "") }}</textarea>
+                        </div>
+
+                        <div class="field field-full">
+                            <label>Тип выпуска</label>
+                            <div class="choice-grid choice-grid-3 compact-choice-grid">
+                                <label class="choice-card compact">
+                                    <input type="radio" name="batch_type" value="Серийный выпуск" {% if form_data.get("batch_type") == "Серийный выпуск" %}checked{% endif %}>
+                                    <span>Серийный выпуск</span>
+                                </label>
+
+                                <label class="choice-card compact">
+                                    <input type="radio" name="batch_type" value="Партия" {% if form_data.get("batch_type") == "Партия" %}checked{% endif %}>
+                                    <span>Партия</span>
+                                </label>
+
+                                <label class="choice-card compact">
+                                    <input type="radio" name="batch_type" value="Единичное изделие" {% if form_data.get("batch_type") == "Единичное изделие" %}checked{% endif %}>
+                                    <span>Единичное изделие</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ТРЕБОВАНИЯ -->
+                <section class="card">
+                    <div class="card-header">
+                        <div>
+                            <h2>📋 Требования</h2>
+                            <p class="section-subtitle">Стандарты и заявляемые показатели</p>
+                        </div>
+                    </div>
+
+                    <div class="fields">
+                        <div class="field field-full">
+                            <label for="standards">Наименование и обозначение стандартов</label>
+                            <textarea id="standards" name="standards" placeholder="Укажите стандарты и обозначения">{{ form_data.get("standards", "") }}</textarea>
+                        </div>
+
+                        <div class="field field-full">
+                            <label for="indicators">Заявляемые показатели</label>
+                            <textarea id="indicators" name="indicators" placeholder="Перечислите заявляемые показатели">{{ form_data.get("indicators", "") }}</textarea>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <div class="submit-wrap">
+                <button type="submit" class="submit-btn">Сформировать Word</button>
+                <p class="submit-note">После нажатия начнётся формирование и скачивание готового файла .docx</p>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+function setOrg(prefix, type) {
+    const full = document.getElementById(prefix + "_name");
+    const short = document.getElementById(prefix + "_short");
+
+    if (type === "АО") {
+        full.value = "Акционерное общество «»";
+        short.value = "АО «»";
+    } else {
+        full.value = "Общество с ограниченной ответственностью «»";
+        short.value = "ООО «»";
+    }
+
+    full.focus();
+}
+
+const same = document.getElementById("same");
+
+const pairs = [
+    ["customer_name", "manufacturer_name"],
+    ["customer_short", "manufacturer_short"],
+    ["customer_ogrn", "manufacturer_ogrn"],
+    ["customer_phone", "manufacturer_phone"],
+    ["customer_address", "manufacturer_address"],
+    ["customer_fact_address", "manufacturer_fact_address"],
+    ["customer_email", "manufacturer_email"]
+];
+
+function syncManufacturer() {
+    pairs.forEach(pair => {
+        const source = document.getElementById(pair[0]);
+        const target = document.getElementById(pair[1]);
+
+        if (same.checked) {
+            target.value = source.value;
+            target.readOnly = true;
+            target.classList.add("locked");
+        } else {
+            target.readOnly = false;
+            target.classList.remove("locked");
+        }
+    });
+}
+
+same.addEventListener("change", syncManufacturer);
+
+pairs.forEach(pair => {
+    document.getElementById(pair[0]).addEventListener("input", () => {
+        if (same.checked) {
+            syncManufacturer();
+        }
+    });
+});
+
+function autoResize(textarea) {
+    textarea.style.height = "auto";
+    textarea.style.height = textarea.scrollHeight + "px";
+}
+
+document.querySelectorAll("textarea").forEach(textarea => {
+    textarea.addEventListener("input", () => autoResize(textarea));
+    autoResize(textarea);
+});
+</script>
+
+
+<script>
+// v11 validation module
+function validateForm(e){
+
+    const required = [
+        ["customer_name","Полное наименование заявителя"],
+        ["manufacturer_name","Полное наименование изготовителя"],
+        ["product_name","Наименование продукции"]
+    ];
+
+    let errors=[];
+
+    required.forEach(item=>{
+        let el=document.getElementById(item[0]);
+        if(el && !el.value.trim()){
+            errors.push(item[1]);
+            el.classList.add("error-field");
+        }
+    });
+
+    if(!document.querySelector('input[name="dssoi"]:checked')){
+        errors.push("Процедура");
+    }
+
+    if(!document.querySelector('input[name="batch_type"]:checked')){
+        errors.push("Тип выпуска");
+    }
+
+    if(errors.length){
+
+        e.preventDefault();
+
+        alert(
+        "Не заполнены поля:\n\n• "
+        + errors.join("\n• ")
+        );
+
+        return false;
+    }
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+const form=document.querySelector("form");
+
+if(form){
+    form.addEventListener("submit",validateForm);
+}
+
+const fields=document.querySelectorAll("input, textarea");
+
+function updateProgress(){
+
+let filled=0;
+
+fields.forEach(f=>{
+    if(f.value.trim()) filled++;
+});
+
+let percent=Math.round(
+    filled / fields.length * 100
+);
+
+let bar=document.getElementById("progressText");
+
+if(bar){
+    bar.innerText="Готовность заявки: "+percent+"%";
+}
+
+}
+
+fields.forEach(f=>{
+    f.addEventListener("input",updateProgress);
+});
+
+updateProgress();
+
+});
+</script>
 
 
 </body>
-
 </html>

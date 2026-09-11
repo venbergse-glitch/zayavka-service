@@ -1,0 +1,26 @@
+
+Добавить в endpoint /create:
+
+required = {
+    "customer_name": "Полное наименование заявителя",
+    "manufacturer_name": "Полное наименование изготовителя",
+    "product_name": "Наименование продукции",
+    "dssoi": "Процедура",
+    "batch_type": "Тип выпуска",
+}
+
+errors = []
+
+for key, title in required.items():
+    if not form_data.get(key):
+        errors.append(title)
+
+if errors:
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "errors": errors,
+            "data": form_data
+        }
+    )
