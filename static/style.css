@@ -111,7 +111,8 @@ body {
 }
 
 .section-subtitle {
-    margin: 6px 0 0;
+    margin: 40px 0 0;
+    /*margin-bottom: 40px;*/
     font-size: 14px;
     color: var(--muted);
 }
@@ -184,6 +185,10 @@ body {
     display: flex;
     flex-direction: column;
     gap: 7px;
+}
+.field input {
+    width: 100%; /* Заставляет инпут растягиваться на всю ширину блока .field */
+    box-sizing: border-box; /* Чтобы внутренние отступы и рамки не ломали ширину */
 }
 
 .field-full {

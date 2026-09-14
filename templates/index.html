@@ -23,7 +23,8 @@
 {% if errors %}
 <div class="validation-box">
     <h3>⚠ Проверьте заполнение заявки</h3>
-    <ul>
+    <!-- Стили добавлены только для списка -->
+    <ul style="color: red; font-weight: bold;">
     {% for error in errors %}
         <li>{{ error }}</li>
     {% endfor %}
@@ -47,6 +48,7 @@
                         <span class="toolbar-label">Быстрый шаблон:</span>
                         <button type="button" class="chip-btn" onclick="setOrg('customer', 'ООО')">ООО</button>
                         <button type="button" class="chip-btn" onclick="setOrg('customer', 'АО')">АО</button>
+                        <button type="button" class="chip-btn" onclick="setOrg('customer', 'ИП')">ИП</button>
                     </div>
 
                     <div class="fields">
@@ -72,20 +74,23 @@
 
                         <div class="field field-full">
                             <label for="customer_address">Юридический адрес</label>
-                            <textarea id="customer_address" name="customer_address" placeholder="Укажите юридический адрес">{{ form_data.get("customer_address", "") }}</textarea>
+                            <textarea id="customer_address" name="customer_address" placeholder="Укажите индекс и страну в начале адреса, например:
+000000, Россия, г. Москва, ул. ...">{{ form_data.get("customer_address", "") }}</textarea>
                         </div>
 
                         <div class="field field-full">
                             <label for="customer_fact_address">Фактический адрес</label>
-                            <textarea id="customer_fact_address" name="customer_fact_address" placeholder="Укажите фактический адрес">{{ form_data.get("customer_fact_address", "") }}</textarea>
+                            <textarea id="customer_fact_address" name="customer_fact_address" placeholder="Укажите индекс и страну в начале адреса, например:
+000000, Россия, г. Москва, ул. ...">{{ form_data.get("customer_fact_address", "") }}</textarea>
                         </div>
 
-                        <div class="field">
+                        <!-- Новый родительский контейнер, который выстроит элементы в столбик -->
+                        <div class="field field-full">
                             <label for="customer_email">Email</label>
                             <input id="customer_email" name="customer_email" placeholder="example@mail.ru" value="{{ form_data.get('customer_email', '') }}">
                         </div>
 
-                        <div class="field">
+                        <div class="field field-full">
                             <label for="person">В лице</label>
                             <input id="person" name="person" placeholder="Должность, ФИО" value="{{ form_data.get('person', '') }}">
                         </div>
@@ -97,7 +102,7 @@
                     <div class="card-header header-between">
                         <div>
                             <h2>🏭 Изготовитель</h2>
-                            <p class="section-subtitle">Данные изготовителя продукции</p>
+                            <p class="section-subtitle" style="margin-bottom: 70px;">Данные изготовителя продукции</p>
                         </div>
 
                         <label class="toggle-box">
@@ -266,11 +271,16 @@ function setOrg(prefix, type) {
     const short = document.getElementById(prefix + "_short");
 
     if (type === "АО") {
-        full.value = "Акционерное общество «»";
-        short.value = "АО «»";
-    } else {
-        full.value = "Общество с ограниченной ответственностью «»";
-        short.value = "ООО «»";
+        full.value = "Акционерное общество « »";
+        short.value = "АО « »";
+    }
+    if (type === "ООО") {
+        full.value = "Общество с ограниченной ответственностью « »";
+        short.value = "ООО « »";
+    }
+    if (type === "ИП") {
+        full.value = "Индивидуальный предприниматель « »";
+        short.value = "ИП « »";
     }
 
     full.focus();
