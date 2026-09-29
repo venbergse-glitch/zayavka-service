@@ -7,35 +7,47 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-
 <div class="page">
     <div class="container">
-
         <header class="hero">
             <div class="hero-badge">Онлайн-заявка</div>
             <h1>Формирование заявки</h1>
-            <p class="hero-text">
-                Заполните данные организации и продукции, после чего получите готовый документ Word.
-            </p>
+            <p class="hero-text">Заполните данные организации и продукции, проверьте заявку и получите готовый документ Word.</p>
         </header>
 
-        <form method="post" action="/create" class="app-form">
-{% if errors %}
-<div class="validation-box">
-    <h3>⚠ Проверьте заполнение заявки</h3>
-    <!-- Стили добавлены только для списка -->
-    <ul style="color: red; font-weight: bold;">
-    {% for error in errors %}
-        <li>{{ error }}</li>
-    {% endfor %}
-    </ul>
-</div>
-{% endif %}
+        <div class="draft-toolbar" aria-label="Инструменты заявки">
+            <div class="draft-toolbar-main">
+                <div>
+                    <strong>Черновик заявки</strong>
+                    <span>Сохраняется только файлом на вашем компьютере. На сайте черновики не хранятся.</span>
+                </div>
+                <div class="draft-actions">
+                    <button type="button" class="secondary-btn" id="saveDraftBtn">Сохранить черновик</button>
+                    <button type="button" class="secondary-btn" id="loadDraftBtn">Загрузить черновик</button>
+                    <button type="button" class="text-btn danger-text" id="clearFormBtn">Очистить форму</button>
+                    <input type="file" id="draftFileInput" accept="application/json,.json" hidden>
+                </div>
+            </div>
+            <div class="progress-box" id="progressBox">
+                <div class="progress-meta">
+                    <span id="progressText">Обязательные поля: 0 из 5</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+            </div>
+        </div>
 
+        <form method="post" action="/create" class="app-form" id="applicationForm" novalidate>
+            {% if errors %}
+            <div class="validation-box" id="serverValidationBox">
+                <h3>Проверьте заполнение заявки</h3>
+                <ul>
+                    {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            </div>
+            {% endif %}
 
             <div class="main-grid">
-
-                <!-- ЗАЯВИТЕЛЬ -->
                 <section class="card">
                     <div class="card-header">
                         <div>
@@ -46,15 +58,16 @@
 
                     <div class="template-toolbar">
                         <span class="toolbar-label">Быстрый шаблон:</span>
-                        <button type="button" class="chip-btn" onclick="setOrg('customer', 'ООО')">ООО</button>
-                        <button type="button" class="chip-btn" onclick="setOrg('customer', 'АО')">АО</button>
-                        <button type="button" class="chip-btn" onclick="setOrg('customer', 'ИП')">ИП</button>
+                        <button type="button" class="chip-btn org-template-btn" data-prefix="customer" data-org-type="ООО">ООО</button>
+                        <button type="button" class="chip-btn org-template-btn" data-prefix="customer" data-org-type="АО">АО</button>
+                        <button type="button" class="chip-btn org-template-btn" data-prefix="customer" data-org-type="ИП">ИП</button>
                     </div>
 
                     <div class="fields">
                         <div class="field field-full">
-                            <label for="customer_name">Полное наименование</label>
+                            <label for="customer_name">Полное наименование <span class="required-mark">*</span></label>
                             <input id="customer_name" name="customer_name" placeholder="Например: Общество с ограниченной ответственностью «Ромашка»" value="{{ form_data.get('customer_name', '') }}">
+                            <div class="field-error" data-error-for="customer_name"></div>
                         </div>
 
                         <div class="field field-full">
@@ -63,8 +76,9 @@
                         </div>
 
                         <div class="field">
-                            <label for="customer_ogrn">ОГРН</label>
+                            <label for="customer_ogrn" id="customerOgrnLabel">ОГРН <span class="required-mark">*</span></label>
                             <input id="customer_ogrn" name="customer_ogrn" placeholder="13 цифр" value="{{ form_data.get('customer_ogrn', '') }}">
+                            <div class="field-error" data-error-for="customer_ogrn"></div>
                         </div>
 
                         <div class="field">
@@ -74,20 +88,20 @@
 
                         <div class="field field-full">
                             <label for="customer_address">Юридический адрес</label>
-                            <textarea id="customer_address" name="customer_address" placeholder="Укажите индекс и страну в начале адреса, например:
-000000, Россия, г. Москва, ул. ...">{{ form_data.get("customer_address", "") }}</textarea>
+                            <textarea id="customer_address" name="customer_address" placeholder="Укажите индекс и страну в начале адреса, например:&#10;000000, Россия, г. Москва, ул. ...">{{ form_data.get("customer_address", "") }}</textarea>
                         </div>
 
                         <div class="field field-full">
-                            <label for="customer_fact_address">Фактический адрес</label>
-                            <textarea id="customer_fact_address" name="customer_fact_address" placeholder="Укажите индекс и страну в начале адреса, например:
-000000, Россия, г. Москва, ул. ...">{{ form_data.get("customer_fact_address", "") }}</textarea>
+                            <div class="field-label-row">
+                                <label for="customer_fact_address">Фактический адрес</label>
+                                <label class="inline-check"><input type="checkbox" id="customerSameAddress">Совпадает с юридическим</label>
+                            </div>
+                            <textarea id="customer_fact_address" name="customer_fact_address" placeholder="Укажите фактический адрес">{{ form_data.get("customer_fact_address", "") }}</textarea>
                         </div>
 
-                        <!-- Новый родительский контейнер, который выстроит элементы в столбик -->
                         <div class="field field-full">
                             <label for="customer_email">Email</label>
-                            <input id="customer_email" name="customer_email" placeholder="example@mail.ru" value="{{ form_data.get('customer_email', '') }}">
+                            <input id="customer_email" name="customer_email" placeholder="Укажите удобный для связи Email" value="{{ form_data.get('customer_email', '') }}">
                         </div>
 
                         <div class="field field-full">
@@ -97,18 +111,23 @@
                     </div>
                 </section>
 
-                <!-- ИЗГОТОВИТЕЛЬ -->
                 <section class="card">
                     <div class="card-header header-between">
                         <div>
                             <h2>🏭 Изготовитель</h2>
-                            <p class="section-subtitle" style="margin-bottom: 70px;">Данные изготовителя продукции</p>
+                            <p class="section-subtitle">Данные изготовителя продукции</p>
                         </div>
-
                         <label class="toggle-box">
                             <input id="same" type="checkbox">
                             <span>Совпадает с заявителем</span>
                         </label>
+                    </div>
+
+                    <div class="template-toolbar manufacturer-template-toolbar">
+                        <span class="toolbar-label">Быстрый шаблон:</span>
+                        <button type="button" class="chip-btn org-template-btn" data-prefix="manufacturer" data-org-type="ООО">ООО</button>
+                        <button type="button" class="chip-btn org-template-btn" data-prefix="manufacturer" data-org-type="АО">АО</button>
+                        <button type="button" class="chip-btn org-template-btn" data-prefix="manufacturer" data-org-type="ИП">ИП</button>
                     </div>
 
                     <div class="fields">
@@ -123,7 +142,7 @@
                         </div>
 
                         <div class="field">
-                            <label for="manufacturer_ogrn">ОГРН</label>
+                            <label for="manufacturer_ogrn" id="manufacturerOgrnLabel">ОГРН</label>
                             <input id="manufacturer_ogrn" name="manufacturer_ogrn" placeholder="13 цифр" value="{{ form_data.get('manufacturer_ogrn', '') }}">
                         </div>
 
@@ -138,49 +157,46 @@
                         </div>
 
                         <div class="field field-full">
-                            <label for="manufacturer_fact_address">Фактический адрес</label>
+                            <div class="field-label-row">
+                                <label for="manufacturer_fact_address">Фактический адрес</label>
+                                <label class="inline-check"><input type="checkbox" id="manufacturerSameAddress">Совпадает с юридическим</label>
+                            </div>
                             <textarea id="manufacturer_fact_address" name="manufacturer_fact_address" placeholder="Укажите фактический адрес">{{ form_data.get("manufacturer_fact_address", "") }}</textarea>
                         </div>
 
                         <div class="field field-full">
                             <label for="manufacturer_email">Email</label>
-                            <input id="manufacturer_email" name="manufacturer_email" placeholder="example@mail.ru" value="{{ form_data.get('manufacturer_email', '') }}">
+                            <input id="manufacturer_email" name="manufacturer_email" placeholder="Укажите удобный для связи Email" value="{{ form_data.get('manufacturer_email', '') }}">
                         </div>
                     </div>
                 </section>
-
             </div>
 
-            <!-- ПРОЦЕДУРА -->
             <section class="card">
                 <div class="card-header">
                     <div>
-                        <h2>📄 Процедура</h2>
+                        <h2>📄 Процедура <span class="required-mark">*</span></h2>
                         <p class="section-subtitle">Выберите вид процедуры</p>
                     </div>
                 </div>
-
-                <div class="choice-grid choice-grid-3">
+                <div class="choice-grid choice-grid-3" id="procedureGroup">
                     <label class="choice-card">
                         <input type="radio" name="dssoi" value="Добровольная сертификация" {% if form_data.get("dssoi") == "Добровольная сертификация" %}checked{% endif %}>
                         <span>Добровольная<br>сертификация</span>
                     </label>
-
                     <label class="choice-card">
                         <input type="radio" name="dssoi" value="Оценочные испытания" {% if form_data.get("dssoi") == "Оценочные испытания" %}checked{% endif %}>
                         <span>Оценочные<br>испытания</span>
                     </label>
-
                     <label class="choice-card">
                         <input type="radio" name="dssoi" value="Декларация о соответствии" {% if form_data.get("dssoi") == "Декларация о соответствии" %}checked{% endif %}>
                         <span>Декларация<br>о соответствии</span>
                     </label>
                 </div>
+                <div class="field-error group-error" data-error-for="dssoi"></div>
             </section>
 
             <div class="bottom-grid">
-
-                <!-- ПРОДУКЦИЯ -->
                 <section class="card">
                     <div class="card-header">
                         <div>
@@ -191,18 +207,21 @@
 
                     <div class="fields">
                         <div class="field field-full">
-                            <label for="product_name">Наименование продукции</label>
+                            <label for="product_name">Наименование продукции <span class="required-mark">*</span></label>
                             <textarea id="product_name" class="textarea-large" name="product_name" placeholder="Введите полное наименование и описание продукции">{{ form_data.get("product_name", "") }}</textarea>
+                            <div class="field-error" data-error-for="product_name"></div>
                         </div>
 
                         <div class="field">
                             <label for="okpd2">ОКПД2</label>
                             <input id="okpd2" name="okpd2" placeholder="Например: 13.20.46" value="{{ form_data.get('okpd2', '') }}">
+                            <div class="field-hint">Можно оставить в привычном вам формате.</div>
                         </div>
 
                         <div class="field">
                             <label for="tnved">ТН ВЭД</label>
                             <input id="tnved" name="tnved" placeholder="Например: 7019 64 000 0" value="{{ form_data.get('tnved', '') }}">
+                            <div class="field-hint">Пробелы в коде допускаются.</div>
                         </div>
 
                         <div class="field field-full">
@@ -211,28 +230,26 @@
                         </div>
 
                         <div class="field field-full">
-                            <label>Тип выпуска</label>
-                            <div class="choice-grid choice-grid-3 compact-choice-grid">
+                            <label>Тип выпуска <span class="required-mark">*</span></label>
+                            <div class="choice-grid choice-grid-3 compact-choice-grid" id="batchTypeGroup">
                                 <label class="choice-card compact">
                                     <input type="radio" name="batch_type" value="Серийный выпуск" {% if form_data.get("batch_type") == "Серийный выпуск" %}checked{% endif %}>
                                     <span>Серийный выпуск</span>
                                 </label>
-
                                 <label class="choice-card compact">
                                     <input type="radio" name="batch_type" value="Партия" {% if form_data.get("batch_type") == "Партия" %}checked{% endif %}>
                                     <span>Партия</span>
                                 </label>
-
                                 <label class="choice-card compact">
                                     <input type="radio" name="batch_type" value="Единичное изделие" {% if form_data.get("batch_type") == "Единичное изделие" %}checked{% endif %}>
                                     <span>Единичное изделие</span>
                                 </label>
                             </div>
+                            <div class="field-error group-error" data-error-for="batch_type"></div>
                         </div>
                     </div>
                 </section>
 
-                <!-- ТРЕБОВАНИЯ -->
                 <section class="card">
                     <div class="card-header">
                         <div>
@@ -245,350 +262,104 @@
                         <div class="field field-full standards-field">
                             <label for="standards">Соответствует требованиям</label>
 
+                            <div class="gost-category-toolbar" aria-label="Фильтр ГОСТов по назначению">
+                                <button type="button" class="gost-category-btn is-active" data-gost-category="all">Все</button>
+                                <button type="button" class="gost-category-btn" data-gost-category="materials">Материалы</button>
+                                <button type="button" class="gost-category-btn" data-gost-category="structures">Конструкции</button>
+                                <button type="button" class="gost-category-btn" data-gost-category="doors">Двери / ворота</button>
+                                <button type="button" class="gost-category-btn" data-gost-category="glass">Стекло</button>
+                                <button type="button" class="gost-category-btn" data-gost-category="fireproof">Огнезащита</button>
+                                <button type="button" class="gost-category-btn" data-gost-category="cables">Кабели / ОКЛ</button>
+                            </div>
+
                             <div class="gost-picker" id="gostPicker">
-                                <button
-                                    type="button"
-                                    class="gost-picker-toggle"
-                                    id="gostPickerToggle"
-                                    aria-expanded="false"
-                                    aria-controls="gostPickerMenu"
-                                >
+                                <button type="button" class="gost-picker-toggle" id="gostPickerToggle" aria-expanded="false" aria-controls="gostPickerMenu">
                                     <span class="gost-picker-toggle-text">Выбрать ГОСТы</span>
-                                    <span class="gost-picker-count" id="gostPickerCount">0</span>
+                                    <span class="gost-picker-count is-empty" id="gostPickerCount">0</span>
                                     <span class="gost-picker-arrow" aria-hidden="true">⌄</span>
                                 </button>
 
                                 <div class="gost-picker-menu" id="gostPickerMenu" hidden>
                                     <div class="gost-picker-head">
-                                        <span>Выберите один или несколько стандартов</span>
-                                        <button type="button" class="gost-clear-btn" id="gostClearBtn">Очистить</button>
+                                        <div class="gost-search-wrap">
+                                            <input type="search" id="gostSearch" class="gost-search" placeholder="Поиск: номер, стекло, двери, токсичность..." autocomplete="off">
+                                        </div>
+                                        <button type="button" class="gost-clear-btn" id="gostClearBtn">Очистить выбор</button>
                                     </div>
 
-                                    <div class="gost-options">
-                                        <label class="gost-option"><input type="checkbox" data-gost-key="ng"><span><strong>ГОСТ 30244-94, метод I</strong><small>Негорючесть материалов</small></span></label>
-                                        <label class="gost-option"><input type="checkbox" data-gost-key="g"><span><strong>ГОСТ 30244-94, метод II</strong><small>Горючесть материалов</small></span></label>
-                                        <label class="gost-option"><input type="checkbox" data-gost-key="v"><span><strong>ГОСТ 30402-96</strong><small>Воспламеняемость материалов</small></span></label>
-                                        <label class="gost-option"><input type="checkbox" data-gost-key="d"><span><strong>ГОСТ 12.1.044-2018, п. 11</strong><small>Дымообразующая способность</small></span></label>
-                                        <label class="gost-option"><input type="checkbox" data-gost-key="t"><span><strong>ГОСТ 12.1.044-2018, п. 13</strong><small>Токсичность продуктов горения</small></span></label>
-                                        <label class="gost-option"><input type="checkbox" data-gost-key="rp"><span><strong>ГОСТ Р 51032-97</strong><small>Распространение пламени</small></span></label>
-                                        <label class="gost-option gost-option-paired"><input type="checkbox" data-gost-key="30247_pair"><span><strong>ГОСТ 30247.0-94 // ГОСТ 30247.1-94</strong><small>Огнестойкость строительных конструкций — применяются только вместе</small></span></label>
-                                        <label class="gost-option"><input type="checkbox" data-gost-key="30247_4"><span><strong>ГОСТ 30247.4-2022</strong><small>Огнестойкость светопрозрачных конструкций</small></span></label>
-                                        <label class="gost-option"><input type="checkbox" data-gost-key="53307"><span><strong>ГОСТ Р 53307-2009</strong><small>Огнестойкость противопожарных дверей и ворот</small></span></label>
-                                        <label class="gost-option"><input type="checkbox" data-gost-key="30403"><span><strong>ГОСТ 30403</strong><small>Пожарная опасность строительных конструкций (К0 и др.)</small></span></label>
-                                        <label class="gost-option"><input type="checkbox" data-gost-key="33000"><span><strong>ГОСТ 33000-2014</strong><small>Огнестойкость стекла / стеклопакетов</small></span></label>
-                                        <label class="gost-option"><input type="checkbox" data-gost-key="53295"><span><strong>ГОСТ Р 53295</strong><small>Огнезащита стальных конструкций</small></span></label>
-                                        <label class="gost-option"><input type="checkbox" data-gost-key="1363_2"><span><strong>ГОСТ Р ЕН 1363-2-2014</strong><small>Альтернативные режимы огневого воздействия, в т.ч. углеводородный</small></span></label>
-                                        <label class="gost-option"><input type="checkbox" data-gost-key="50810"><span><strong>ГОСТ Р 50810-95</strong><small>Воспламеняемость декоративных тканей</small></span></label>
-                                        <label class="gost-option"><input type="checkbox" data-gost-key="53292"><span><strong>ГОСТ Р 53292-2009</strong><small>Огнезащита древесины и материалов на её основе</small></span></label>
-                                        <label class="gost-option"><input type="checkbox" data-gost-key="53303"><span><strong>ГОСТ Р 53303-2009</strong><small>Дымогазопроницаемость противопожарных дверей и ворот</small></span></label>
-                                        <label class="gost-option"><input type="checkbox" data-gost-key="53316"><span><strong>ГОСТ Р 53316-2021</strong><small>Работоспособность электропроводок при пожаре (ОКЛ)</small></span></label>
-                                        <label class="gost-option"><input type="checkbox" data-gost-key="53310"><span><strong>ГОСТ Р 53310-2009</strong><small>Огнестойкость кабельных проходок</small></span></label>
+                                    <div class="gost-options" id="gostOptions">
+                                        <label class="gost-option" data-category="materials" data-search="30244 94 метод i негорючесть материалы"><input type="checkbox" data-gost-key="ng"><span><strong>ГОСТ 30244-94, метод I</strong><small>Негорючесть материалов</small></span></label>
+                                        <label class="gost-option" data-category="materials" data-search="30244 94 метод ii горючесть материалы"><input type="checkbox" data-gost-key="g"><span><strong>ГОСТ 30244-94, метод II</strong><small>Горючесть материалов</small></span></label>
+                                        <label class="gost-option" data-category="materials" data-search="30402 96 воспламеняемость материалы"><input type="checkbox" data-gost-key="v"><span><strong>ГОСТ 30402-96</strong><small>Воспламеняемость материалов</small></span></label>
+                                        <label class="gost-option" data-category="materials" data-search="12 1 044 2018 11 дым дымообразование дымообразующая способность"><input type="checkbox" data-gost-key="d"><span><strong>ГОСТ 12.1.044-2018, п. 11</strong><small>Дымообразующая способность</small></span></label>
+                                        <label class="gost-option" data-category="materials" data-search="12 1 044 2018 13 токсичность продукты горения"><input type="checkbox" data-gost-key="t"><span><strong>ГОСТ 12.1.044-2018, п. 13</strong><small>Токсичность продуктов горения</small></span></label>
+                                        <label class="gost-option" data-category="materials" data-search="51032 97 распространение пламени рп"><input type="checkbox" data-gost-key="rp"><span><strong>ГОСТ Р 51032-97</strong><small>Распространение пламени</small></span></label>
+
+                                        <label class="gost-option gost-option-paired" data-category="structures" data-search="30247 0 94 30247 1 94 огнестойкость конструкции несущие ограждающие"><input type="checkbox" data-gost-key="30247_pair"><span><strong>ГОСТ 30247.0-94 // ГОСТ 30247.1-94</strong><small>Огнестойкость строительных конструкций — применяются только вместе</small></span></label>
+                                        <label class="gost-option" data-category="structures glass" data-search="30247 4 2022 светопрозрачные конструкции стекло огнестойкость"><input type="checkbox" data-gost-key="30247_4"><span><strong>ГОСТ 30247.4-2022</strong><small>Огнестойкость светопрозрачных конструкций</small></span></label>
+                                        <label class="gost-option" data-category="doors structures" data-search="53307 2009 двери ворота глухие огнестойкость"><input type="checkbox" data-gost-key="53307"><span><strong>ГОСТ Р 53307-2009</strong><small>Огнестойкость противопожарных дверей и ворот</small></span></label>
+                                        <label class="gost-option" data-category="structures" data-search="30403 к0 пожарная опасность конструкции"><input type="checkbox" data-gost-key="30403"><span><strong>ГОСТ 30403</strong><small>Пожарная опасность строительных конструкций (К0–К3)</small></span></label>
+                                        <label class="gost-option" data-category="glass" data-search="33000 2014 стекло стеклопакет огнестойкость"><input type="checkbox" data-gost-key="33000"><span><strong>ГОСТ 33000-2014</strong><small>Огнестойкость стекла / стеклопакетов</small></span></label>
+                                        <label class="gost-option" data-category="fireproof structures" data-search="53295 огнезащита металл сталь стальных конструкций"><input type="checkbox" data-gost-key="53295"><span><strong>ГОСТ Р 53295</strong><small>Огнезащита стальных конструкций</small></span></label>
+                                        <label class="gost-option" data-category="structures" data-search="1363 2 2014 углеводородный режим альтернативные методы"><input type="checkbox" data-gost-key="1363_2"><span><strong>ГОСТ Р ЕН 1363-2-2014</strong><small>Альтернативные режимы огневого воздействия, в т.ч. углеводородный</small></span></label>
+                                        <label class="gost-option" data-category="materials" data-search="50810 95 ткани текстиль воспламеняемость"><input type="checkbox" data-gost-key="50810"><span><strong>ГОСТ Р 50810-95</strong><small>Воспламеняемость декоративных тканей</small></span></label>
+                                        <label class="gost-option" data-category="fireproof materials" data-search="53292 2009 огнезащита древесина дерево"><input type="checkbox" data-gost-key="53292"><span><strong>ГОСТ Р 53292-2009</strong><small>Огнезащита древесины и материалов на её основе</small></span></label>
+                                        <label class="gost-option" data-category="doors structures" data-search="53303 2009 дым газ дымогазопроницаемость двери ворота"><input type="checkbox" data-gost-key="53303"><span><strong>ГОСТ Р 53303-2009</strong><small>Дымогазопроницаемость противопожарных дверей и ворот</small></span></label>
+                                        <label class="gost-option" data-category="cables" data-search="53316 2021 окл электропроводки работоспособность пожар"><input type="checkbox" data-gost-key="53316"><span><strong>ГОСТ Р 53316-2021</strong><small>Работоспособность электропроводок при пожаре (ОКЛ)</small></span></label>
+                                        <label class="gost-option" data-category="cables structures" data-search="53310 2009 кабель проходки огнестойкость"><input type="checkbox" data-gost-key="53310"><span><strong>ГОСТ Р 53310-2009</strong><small>Огнестойкость кабельных проходок</small></span></label>
+                                        <div class="gost-empty" id="gostEmpty" hidden>По вашему фильтру ничего не найдено.</div>
                                     </div>
                                 </div>
                             </div>
 
+                            <div class="selected-gosts" id="selectedGosts" hidden></div>
                             <textarea id="standards" name="standards" placeholder="Выберите ГОСТы из списка выше или введите требования вручную">{{ form_data.get("standards", "") }}</textarea>
                             <div class="field-hint">Выбранные ГОСТы автоматически добавляются в поле. Текст можно дополнить или отредактировать вручную.</div>
                         </div>
 
+                        <div class="field field-full" id="indicatorHelperField" hidden>
+                            <label>Показатели по выбранным ГОСТам</label>
+                            <div class="indicator-helper" id="indicatorHelper"></div>
+                            <div class="field-hint">Выберите нужное значение — приложение сформирует только строку показателя. Название ГОСТа здесь не дублируется: оно уже указано в поле «Соответствует требованиям».</div>
+                        </div>
+
                         <div class="field field-full">
                             <label for="indicators">Заявляемые показатели</label>
-                            <textarea id="indicators" name="indicators" placeholder="Перечислите заявляемые показатели">{{ form_data.get("indicators", "") }}</textarea>
+                            <textarea id="indicators" name="indicators" placeholder="Перечислите заявляемые показатели или используйте подсказки выше">{{ form_data.get("indicators", "") }}</textarea>
+                            <div class="field-hint">Здесь указываются только заявляемые показатели. Автоматически сформированные строки можно дополнить или отредактировать вручную.</div>
                         </div>
                     </div>
                 </section>
-
             </div>
 
             <div class="submit-wrap">
-                <button type="submit" class="submit-btn">Сформировать Word</button>
-                <p class="submit-note">После нажатия начнётся формирование и скачивание готового файла .docx</p>
+                <button type="submit" class="submit-btn">Проверить и сформировать Word</button>
+                <p class="submit-note">Сначала будет показана краткая проверка введённых данных. После подтверждения начнётся скачивание .docx.</p>
             </div>
-
         </form>
     </div>
 </div>
 
-<script>
-function setOrg(prefix, type) {
-    const full = document.getElementById(prefix + "_name");
-    const short = document.getElementById(prefix + "_short");
+<div class="modal-backdrop" id="reviewModal" hidden>
+    <div class="review-modal" role="dialog" aria-modal="true" aria-labelledby="reviewTitle">
+        <div class="review-header">
+            <div>
+                <div class="hero-badge">Проверка перед Word</div>
+                <h2 id="reviewTitle">Проверьте заявку</h2>
+                <p>Это только предварительный просмотр введённых данных. Word сформируется после подтверждения.</p>
+            </div>
+            <button type="button" class="modal-close" id="reviewCloseBtn" aria-label="Закрыть">×</button>
+        </div>
+        <div class="review-warnings" id="reviewWarnings" hidden></div>
+        <div class="review-grid" id="reviewContent"></div>
+        <div class="review-actions">
+            <button type="button" class="secondary-btn" id="reviewEditBtn">Вернуться к редактированию</button>
+            <button type="button" class="submit-btn review-submit" id="reviewSubmitBtn">Всё верно — сформировать Word</button>
+        </div>
+    </div>
+</div>
 
-    if (type === "АО") {
-        full.value = "Акционерное общество « »";
-        short.value = "АО « »";
-    }
-    if (type === "ООО") {
-        full.value = "Общество с ограниченной ответственностью « »";
-        short.value = "ООО « »";
-    }
-    if (type === "ИП") {
-        full.value = "Индивидуальный предприниматель « »";
-        short.value = "ИП « »";
-    }
-
-    full.focus();
-}
-
-const same = document.getElementById("same");
-
-const pairs = [
-    ["customer_name", "manufacturer_name"],
-    ["customer_short", "manufacturer_short"],
-    ["customer_ogrn", "manufacturer_ogrn"],
-    ["customer_phone", "manufacturer_phone"],
-    ["customer_address", "manufacturer_address"],
-    ["customer_fact_address", "manufacturer_fact_address"],
-    ["customer_email", "manufacturer_email"]
-];
-
-function syncManufacturer() {
-    pairs.forEach(pair => {
-        const source = document.getElementById(pair[0]);
-        const target = document.getElementById(pair[1]);
-
-        if (same.checked) {
-            target.value = source.value;
-            target.readOnly = true;
-            target.classList.add("locked");
-        } else {
-            target.readOnly = false;
-            target.classList.remove("locked");
-        }
-    });
-}
-
-same.addEventListener("change", syncManufacturer);
-
-pairs.forEach(pair => {
-    document.getElementById(pair[0]).addEventListener("input", () => {
-        if (same.checked) {
-            syncManufacturer();
-        }
-    });
-});
-
-function autoResize(textarea) {
-    textarea.style.height = "auto";
-    textarea.style.height = textarea.scrollHeight + "px";
-}
-
-document.querySelectorAll("textarea").forEach(textarea => {
-    textarea.addEventListener("input", () => autoResize(textarea));
-    autoResize(textarea);
-});
-
-const gostTexts = {
-    ng: "Материал относится к негорючим по ГОСТ 30244-94 (метод I);",
-    g: "Группа горючести – Г? по ГОСТ 30244-94 (метод II);",
-    v: "Группа воспламеняемости – В? по ГОСТ 30402-96;",
-    d: "Группа дымообразования – Д? по ГОСТ 12.1.044-2018 п. 11;",
-    t: "Группа токсичности – Т? по ГОСТ 12.1.044-2018 п. 13;",
-    rp: "Группа распространения пламени - РП? по ГОСТ Р 51032-97;",
-    "30247_pair": "ГОСТ 30247.0-94 «Конструкции строительные. Методы испытаний на огнестойкость. Общие требования»;\nГОСТ 30247.1-94 «Конструкции строительные. Методы испытаний на огнестойкость. Несущие и ограждающие конструкции».",
-    "30247_4": "ГОСТ 30247.4-2022 «Конструкции строительные. Методы испытаний на огнестойкость. Светопрозрачные ограждающие конструкции».",
-    "53307": "ГОСТ Р 53307-2009 «Конструкции строительные. Противопожарные двери и ворота. Метод испытаний на огнестойкость».",
-    "30403": "ГОСТ 30403 «Конструкции строительные. Метод испытания на пожарную опасность».",
-    "33000": "ГОСТ 33000 «Стекло и изделия из него. Метод испытания на огнестойкость».",
-    "53295": "ГОСТ Р 53295 «Средства огнезащиты для стальных конструкций. Общие требования. Метод определения огнезащитной эффективности».",
-    "1363_2": "ГОСТ Р ЕН 1363-2-2014 «Конструкции строительные. Испытания на огнестойкость. Часть 2. Альтернативные и дополнительные методы».",
-    "50810": "ГОСТ Р 50810-95 «Пожарная безопасность текстильных материалов. Ткани декоративные. Метод испытания на воспламеняемость и классификация».",
-    "53292": "ГОСТ Р 53292-2009 «Огнезащитные составы и вещества для древесины и материалов на ее основе. Общие требования. Методы испытаний».",
-    "53303": "ГОСТ Р 53303-2009 «Конструкции строительные. Противопожарные двери и ворота. Метод испытаний на дымогазопроницаемость».",
-    "53316": "ГОСТ Р 53316-2021 «Электропроводки. Сохраняемость работоспособности в условиях пожара. Методы испытаний».",
-    "53310": "ГОСТ Р 53310-2009 «Проходки кабельные, вводы герметичные и проходы шинопроводов. Требования пожарной безопасности. Методы испытаний на огнестойкость»."
-};
-
-const gostPicker = document.getElementById("gostPicker");
-const gostPickerToggle = document.getElementById("gostPickerToggle");
-const gostPickerMenu = document.getElementById("gostPickerMenu");
-const gostPickerCount = document.getElementById("gostPickerCount");
-const gostClearBtn = document.getElementById("gostClearBtn");
-const standardsTextarea = document.getElementById("standards");
-const gostCheckboxes = Array.from(document.querySelectorAll("[data-gost-key]"));
-
-function normalizeLineBreaks(value) {
-    return value.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-}
-
-function removeManagedGostText(value, text) {
-    const normalizedValue = normalizeLineBreaks(value);
-    const normalizedText = normalizeLineBreaks(text);
-    return normalizedValue
-        .split(normalizedText)
-        .join("")
-        .split("\n")
-        .map(line => line.trimEnd())
-        .join("\n")
-        .replace(/\n{3,}/g, "\n\n")
-        .trim();
-}
-
-function updateGostCount() {
-    const count = gostCheckboxes.filter(checkbox => checkbox.checked).length;
-    gostPickerCount.textContent = count;
-    gostPickerCount.classList.toggle("is-empty", count === 0);
-}
-
-function appendGostText(text) {
-    const current = standardsTextarea.value.trim();
-    if (normalizeLineBreaks(current).includes(normalizeLineBreaks(text))) {
-        return;
-    }
-    standardsTextarea.value = [current, text].filter(Boolean).join("\n");
-}
-
-function applyGostSelectionChange(checkbox) {
-    const text = gostTexts[checkbox.dataset.gostKey];
-
-    if (checkbox.checked) {
-        appendGostText(text);
-    } else {
-        standardsTextarea.value = removeManagedGostText(standardsTextarea.value, text);
-    }
-
-    updateGostCount();
-    autoResize(standardsTextarea);
-    standardsTextarea.dispatchEvent(new Event("input", { bubbles: true }));
-}
-
-function restoreGostSelection() {
-    const current = normalizeLineBreaks(standardsTextarea.value);
-    gostCheckboxes.forEach(checkbox => {
-        const text = normalizeLineBreaks(gostTexts[checkbox.dataset.gostKey]);
-        checkbox.checked = current.includes(text);
-    });
-    updateGostCount();
-}
-
-function setGostMenu(open) {
-    gostPickerMenu.hidden = !open;
-    gostPickerToggle.setAttribute("aria-expanded", String(open));
-    gostPicker.classList.toggle("is-open", open);
-}
-
-if (gostPicker && standardsTextarea) {
-    restoreGostSelection();
-
-    gostPickerToggle.addEventListener("click", () => {
-        setGostMenu(gostPickerMenu.hidden);
-    });
-
-    gostCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener("change", () => applyGostSelectionChange(checkbox));
-    });
-
-    gostClearBtn.addEventListener("click", () => {
-        gostCheckboxes.forEach(checkbox => {
-            if (checkbox.checked) {
-                standardsTextarea.value = removeManagedGostText(
-                    standardsTextarea.value,
-                    gostTexts[checkbox.dataset.gostKey]
-                );
-            }
-            checkbox.checked = false;
-        });
-        updateGostCount();
-        autoResize(standardsTextarea);
-        standardsTextarea.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-
-    document.addEventListener("click", event => {
-        if (!gostPicker.contains(event.target)) {
-            setGostMenu(false);
-        }
-    });
-
-    document.addEventListener("keydown", event => {
-        if (event.key === "Escape") {
-            setGostMenu(false);
-            gostPickerToggle.focus();
-        }
-    });
-}
-</script>
-
-
-<script>
-// v11 validation module
-function validateForm(e){
-
-    const required = [
-        ["customer_name","Полное наименование заявителя"],
-        ["manufacturer_name","Полное наименование изготовителя"],
-        ["product_name","Наименование продукции"]
-    ];
-
-    let errors=[];
-
-    required.forEach(item=>{
-        let el=document.getElementById(item[0]);
-        if(el && !el.value.trim()){
-            errors.push(item[1]);
-            el.classList.add("error-field");
-        }
-    });
-
-    if(!document.querySelector('input[name="dssoi"]:checked')){
-        errors.push("Процедура");
-    }
-
-    if(!document.querySelector('input[name="batch_type"]:checked')){
-        errors.push("Тип выпуска");
-    }
-
-    if(errors.length){
-
-        e.preventDefault();
-
-        alert(
-        "Не заполнены поля:\n\n• "
-        + errors.join("\n• ")
-        );
-
-        return false;
-    }
-}
-
-document.addEventListener("DOMContentLoaded",()=>{
-
-const form=document.querySelector("form");
-
-if(form){
-    form.addEventListener("submit",validateForm);
-}
-
-const fields=document.querySelectorAll("input, textarea");
-
-function updateProgress(){
-
-let filled=0;
-
-fields.forEach(f=>{
-    if(f.value.trim()) filled++;
-});
-
-let percent=Math.round(
-    filled / fields.length * 100
-);
-
-let bar=document.getElementById("progressText");
-
-if(bar){
-    bar.innerText="Готовность заявки: "+percent+"%";
-}
-
-}
-
-fields.forEach(f=>{
-    f.addEventListener("input",updateProgress);
-});
-
-updateProgress();
-
-});
-</script>
-
-
+<div class="toast" id="toast" hidden></div>
+<script src="/static/app.js"></script>
 </body>
 </html>

@@ -92,7 +92,7 @@ def create(
     if not data['customer_name']:
         errors.append('Полное наименование заявителя')
     if not data['customer_ogrn']:
-        errors.append('ОГРН заявителя')
+        errors.append('ОГРН / ОГРНИП заявителя')
     if not data['dssoi']:
         errors.append('Вид процедуры')
     if not data['product_name']:
