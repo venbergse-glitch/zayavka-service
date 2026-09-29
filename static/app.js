@@ -27,14 +27,14 @@
         if (!full || !short || !ogrn) return;
 
         if (type === "АО") {
-            full.value = "Акционерное общество « »";
-            short.value = "АО « »";
+            full.value = "Акционерное общество «___»";
+            short.value = "АО «___»";
         } else if (type === "ООО") {
-            full.value = "Общество с ограниченной ответственностью « »";
-            short.value = "ООО « »";
+            full.value = "Общество с ограниченной ответственностью «___»";
+            short.value = "ООО «___»";
         } else if (type === "ИП") {
-            full.value = "Индивидуальный предприниматель ";
-            short.value = "ИП ";
+            full.value = "Индивидуальный предприниматель ___";
+            short.value = "ИП ___";
         }
 
         if (ogrnLabel) {
